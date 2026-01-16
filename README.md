@@ -38,7 +38,7 @@ cd antigravity-skills
 ./sync-to-github.sh install global
 ```
 
-This copies skills to `~/.antigravity/skills/` - available for all projects.
+This copies skills to `~/.gemini/skills/` and GEMINI.md to `~/.gemini/GEMINI.md` - the official Gemini CLI locations for global availability.
 
 ### Install to a Specific Project
 
