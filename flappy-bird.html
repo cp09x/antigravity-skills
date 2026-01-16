@@ -1,0 +1,2108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            overflow: hidden;
+        }
+
+        .game-wrapper {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+        .game-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 0 10px;
+        }
+
+        .score-display {
+            font-size: 28px;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            display: flex;
+            gap: 30px;
+        }
+
+        .score-display span {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            padding: 12px 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .score-display strong {
+            color: #FFD700;
+        }
+
+        #gameCanvas {
+            border-radius: 20px;
+            box-shadow:
+                0 0 0 5px rgba(255, 255, 255, 0.1),
+                0 25px 80px rgba(0, 0, 0, 0.6),
+                0 0 150px rgba(78, 205, 196, 0.15),
+                inset 0 0 100px rgba(0, 0, 0, 0.1);
+            display: block;
+        }
+
+        /* Canvas wrapper - positioning context for overlays */
+        .canvas-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        /* Side Panel */
+        .side-panel {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            border-radius: 20px;
+            padding: 25px;
+            width: 280px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .side-panel h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #4ECDC4;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+        }
+
+        .stats {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-label {
+            opacity: 0.7;
+            font-size: 14px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .difficulty-section {
+            margin-bottom: 25px;
+        }
+
+        .difficulty-section h3 {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 10px;
+        }
+
+        .difficulty-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .diff-btn {
+            flex: 0 0 auto;
+            min-width: 60px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            white-space: nowrap;
+        }
+
+        .diff-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .diff-btn.active {
+            background: linear-gradient(135deg, #4ECDC4, #44A08D);
+            box-shadow: 0 5px 20px rgba(78, 205, 196, 0.4);
+        }
+
+        .controls-info {
+            font-size: 13px;
+            opacity: 0.6;
+            line-height: 1.8;
+        }
+
+        .controls-info kbd {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+
+        /* Power-ups display */
+        .powerups {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .powerups h3 {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 10px;
+        }
+
+        .powerup-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .powerup-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        /* Achievements section */
+        .achievements-section {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .achievements-section h3 {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 10px;
+        }
+
+        .achievements-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .achievement-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            background: rgba(255, 255, 255, 0.1);
+            opacity: 0.4;
+            transition: all 0.3s ease;
+        }
+
+        .achievement-badge.unlocked {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            opacity: 1;
+            font-weight: 600;
+        }
+
+        .achievement-badge:hover {
+            transform: scale(1.05);
+        }
+
+        /* Settings section */
+        .settings-section {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .settings-section h3 {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 12px;
+        }
+
+        .setting-item {
+            margin-bottom: 12px;
+        }
+
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+
+        .toggle-label input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #4ECDC4;
+        }
+
+        .reset-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .reset-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .reset-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(3px);
+        }
+
+        .reset-btn.danger {
+            border-color: rgba(255, 107, 107, 0.5);
+            color: #FF6B6B;
+        }
+
+        .reset-btn.danger:hover {
+            background: rgba(255, 107, 107, 0.2);
+            border-color: #FF6B6B;
+        }
+
+        /* Confirmation dialog */
+        .confirm-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            z-index: 1000;
+            text-align: center;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .confirm-dialog h4 {
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .confirm-dialog p {
+            margin-bottom: 20px;
+            opacity: 0.7;
+            font-size: 14px;
+        }
+
+        .confirm-dialog .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .confirm-dialog button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .confirm-dialog .btn-cancel {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .confirm-dialog .btn-confirm {
+            background: linear-gradient(135deg, #FF6B6B, #C0392B);
+            color: white;
+        }
+
+        .confirm-dialog button:hover {
+            transform: scale(1.05);
+        }
+
+        .dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Overlays */
+        .overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 50px 70px;
+            border-radius: 25px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .overlay h1 {
+            font-size: 56px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #FFD700, #FFA500, #FF6B6B);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: none;
+        }
+
+        .overlay p {
+            font-size: 18px;
+            opacity: 0.8;
+            margin-bottom: 15px;
+        }
+
+        .overlay .instructions {
+            font-size: 14px;
+            opacity: 0.5;
+            margin-top: 20px;
+        }
+
+        .game-over h1 {
+            background: linear-gradient(135deg, #FF6B6B, #FF4757, #C0392B);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .final-score {
+            font-size: 72px !important;
+            font-weight: bold;
+            margin: 25px 0 !important;
+            color: #FFD700 !important;
+            opacity: 1 !important;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 20px 0;
+        }
+
+        .stats-row div {
+            text-align: center;
+        }
+
+        .stats-row .label {
+            font-size: 12px;
+            opacity: 0.6;
+            margin-bottom: 5px;
+        }
+
+        .stats-row .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4ECDC4;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4ECDC4, #44A08D);
+            border: none;
+            padding: 18px 50px;
+            font-size: 18px;
+            color: white;
+            border-radius: 35px;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            box-shadow: 0 10px 30px rgba(78, 205, 196, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(78, 205, 196, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(-2px);
+        }
+
+        /* Pause indicator */
+        .pause-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: white;
+            opacity: 0.7;
+        }
+
+        /* Combo display */
+        .combo-display {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 28px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .combo-display.show {
+            opacity: 1;
+            animation: comboPop 0.3s ease;
+        }
+
+        @keyframes comboPop {
+            0% {
+                transform: translateX(-50%) scale(0.5);
+            }
+
+            50% {
+                transform: translateX(-50%) scale(1.3);
+            }
+
+            100% {
+                transform: translateX(-50%) scale(1);
+            }
+        }
+
+        /* Screen flash effect */
+        .screen-flash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.4) 0%, transparent 70%);
+            pointer-events: none;
+            opacity: 0;
+            animation: flashPulse 1s ease-out;
+        }
+
+        @keyframes flashPulse {
+            0% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        /* Close call indicator */
+        .close-call {
+            position: absolute;
+            top: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 20px;
+            font-weight: bold;
+            color: #FF6B6B;
+            text-shadow: 0 0 15px rgba(255, 107, 107, 0.8);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .close-call.show {
+            opacity: 1;
+            animation: closeCallPop 0.5s ease-out;
+        }
+
+        @keyframes closeCallPop {
+            0% {
+                transform: translateX(-50%) scale(0.5);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateX(-50%) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        /* Canvas Wrapper - positioning context for overlays */
+        .canvas-wrapper {
+            position: relative;
+            width: 800px;
+            /* Or match canvas width */
+            height: 700px;
+            /* Or match canvas height */
+            overflow: hidden;
+            /* Ensure overlays don't spill */
+        }
+
+        /* HUD for live game stats - top-right inside canvas */
+        .live-hud {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.9);
+            pointer-events: none;
+            z-index: 5;
+            align-items: flex-end;
+        }
+
+        .hud-item {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 4px 10px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+        }
+
+        .hud-value {
+            color: #4ECDC4;
+            font-weight: bold;
+        }
+
+        /* Night mode toggle */
+        .theme-toggle {
+            position: absolute;
+            bottom: 80px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 12px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 22px;
+            transition: all 0.3s;
+            z-index: 5;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        /* Active powerup indicators */
+        .active-powerups {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .powerup-active {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        /* New record celebration */
+        .new-record {
+            color: #FFD700 !important;
+            animation: recordPulse 0.5s ease infinite;
+        }
+
+        @keyframes recordPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="game-wrapper">
+        <!-- Side Panel -->
+        <div class="side-panel">
+            <h2>🎮 Game Stats</h2>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-label">Games Played</span>
+                    <span class="stat-value" id="gamesPlayed">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Score</span>
+                    <span class="stat-value" id="totalScore">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Best Streak</span>
+                    <span class="stat-value" id="bestStreak">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Pipes Cleared</span>
+                    <span class="stat-value" id="pipesCleared">0</span>
+                </div>
+            </div>
+
+            <div class="difficulty-section">
+                <h3>⚡ Difficulty</h3>
+                <div class="difficulty-buttons">
+                    <button class="diff-btn" data-diff="easy">Easy</button>
+                    <button class="diff-btn" data-diff="normal">Normal</button>
+                    <button class="diff-btn" data-diff="hard">Hard</button>
+                    <button class="diff-btn active" data-diff="progressive">📈 Progressive</button>
+                    <button class="diff-btn" data-diff="extreme">🔥 Extreme</button>
+                </div>
+                <div id="difficultySlider" style="margin-top: 12px; display: none;">
+                    <label style="color: #aaa; font-size: 12px;">Level: <span id="levelValue">5</span>/10</label>
+                    <input type="range" min="1" max="10" value="5" id="levelSlider"
+                        style="width: 100%; margin-top: 4px; accent-color: #ff4444;">
+                </div>
+            </div>
+
+            <div class="controls-info">
+                <p><kbd>SPACE</kbd> or <kbd>Click</kbd> - Flap</p>
+                <p><kbd>P</kbd> - Pause Game</p>
+                <p><kbd>G</kbd> - God Mode (Auto-play)</p>
+                <p><kbd>R</kbd> - Restart</p>
+            </div>
+
+            <div class="powerups">
+                <h3>✨ Power-ups</h3>
+                <div class="powerup-item">
+                    <div class="powerup-icon" style="background: #FFD700;">⭐</div>
+                    <span>Star - Invincibility (3s)</span>
+                </div>
+                <div class="powerup-item">
+                    <div class="powerup-icon" style="background: #4ECDC4;">🌀</div>
+                    <span>Slow-Mo - Slows time</span>
+                </div>
+                <div class="powerup-item">
+                    <div class="powerup-icon" style="background: #FF6B6B;">💎</div>
+                    <span>Diamond - 5x Points</span>
+                </div>
+            </div>
+
+            <div class="achievements-section">
+                <h3>🏅 Achievements</h3>
+                <div id="achievementsList" class="achievements-list">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Settings & Reset Section -->
+            <div class="settings-section">
+                <h3>⚙️ Settings</h3>
+                <p style="font-size: 11px; opacity: 0.6; margin-bottom: 10px;">Achievements reset each game</p>
+                <div class="reset-buttons">
+                    <button class="reset-btn" id="resetStats" title="Reset games played, total score, etc.">🗑️ Reset
+                        Stats</button>
+                    <button class="reset-btn danger" id="resetAll" title="Reset everything including best score">💥
+                        Reset All</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Container -->
+        <div class="game-container">
+            <div class="header">
+                <div class="score-display">
+                    <span>Score: <strong id="currentScore">0</strong></span>
+                    <span>Best: <strong id="bestScore">0</strong></span>
+                </div>
+            </div>
+
+            <!-- Canvas Wrapper - positioning context for overlays -->
+            <div class="canvas-wrapper">
+                <canvas id="gameCanvas" width="800" height="700"></canvas>
+
+                <button class="theme-toggle" id="themeToggle" title="Toggle Day/Night">🌙</button>
+                <div class="pause-indicator hidden" id="pauseIndicator">⏸️ PAUSED</div>
+                <div class="combo-display" id="comboDisplay">🔥 COMBO x3!</div>
+                <div class="close-call" id="closeCallDisplay">⚡ CLOSE CALL!</div>
+                <div class="active-powerups" id="activePowerups"></div>
+
+                <!-- Live HUD -->
+                <div class="live-hud hidden" id="liveHud">
+                    <div class="hud-item">Speed: <span class="hud-value" id="hudSpeed">1.8</span></div>
+                    <div class="hud-item">Gap: <span class="hud-value" id="hudGap">210</span></div>
+                    <div class="hud-item">Combo: <span class="hud-value" id="hudCombo">0</span></div>
+                </div>
+
+                <!-- Start Screen -->
+                <div class="overlay" id="startScreen">
+                    <h1>🐦 Flappy Bird</h1>
+                    <p>Navigate through the pipes and collect power-ups!</p>
+                    <button class="btn" onclick="startGame()">Play Now</button>
+                    <p class="instructions">Press SPACE or Click to flap</p>
+                </div>
+
+                <!-- Game Over Screen -->
+                <div class="overlay game-over hidden" id="gameOverScreen">
+                    <h1 id="gameOverTitle">Game Over!</h1>
+                    <p class="final-score" id="finalScore">0</p>
+                    <div id="newBestBadge" class="hidden"
+                        style="color: #FFD700; font-size: 18px; margin: -15px 0 15px; animation: recordPulse 0.5s infinite;">
+                        🎉 NEW BEST SCORE! 🎉</div>
+                    <div class="stats-row">
+                        <div>
+                            <div class="label">Pipes</div>
+                            <div class="value" id="pipesPassed">0</div>
+                        </div>
+                        <div>
+                            <div class="label">Time</div>
+                            <div class="value" id="gameTime">0s</div>
+                        </div>
+                        <div>
+                            <div class="label">Best</div>
+                            <div class="value" id="bestDisplay">0</div>
+                        </div>
+                    </div>
+                    <div class="stats-row">
+                        <div>
+                            <div class="label">Max Combo</div>
+                            <div class="value" id="maxComboDisplay">0</div>
+                        </div>
+                        <div>
+                            <div class="label">Perfect</div>
+                            <div class="value" id="perfectCount">0</div>
+                        </div>
+                        <div>
+                            <div class="label">Close Calls</div>
+                            <div class="value" id="closeCallCount">0</div>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="startGame()">Play Again</button>
+                    <p class="instructions">Press SPACE to restart</p>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Canvas setup
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // Difficulty settings - Balanced physics
+            const difficulties = {
+                easy: { gravity: 0.22, flapStrength: -6, pipeSpeed: 1.5, pipeGap: 240, spawnInterval: 3500 },
+                normal: { gravity: 0.28, flapStrength: -6.5, pipeSpeed: 1.8, pipeGap: 210, spawnInterval: 3000 },
+                hard: { gravity: 0.35, flapStrength: -7, pipeSpeed: 2.2, pipeGap: 180, spawnInterval: 2500 },
+                progressive: { gravity: 0.35, flapStrength: -7, pipeSpeed: 2.2, pipeGap: 180, spawnInterval: 2500 },
+                extreme: { gravity: 0.42, flapStrength: -7.5, pipeSpeed: 2.8, pipeGap: 140, spawnInterval: 2000 }
+            };
+
+            let currentDifficulty = 'progressive';
+            let settings = difficulties[currentDifficulty];
+
+            // Difficulty level slider (1-10, used for progressive/extreme)
+            let difficultyLevel = 5;
+
+            // Progressive difficulty: increases based on score - MUCH HARDER
+            function getProgressiveDifficulty() {
+                // Faster scaling - difficulty increases every 5 points
+                const level = Math.min(score / 5, 15); // Max level 15
+
+                // Gap shrinks from 180 to 110 (extremely tight but possible)
+                const gap = Math.max(110, 180 - level * 4.7);
+                // Speed increases from 2.2 to 3.8 (very fast)
+                const speed = Math.min(3.8, 2.2 + level * 0.11);
+                // Gravity increases from 0.35 to 0.50
+                const gravity = Math.min(0.50, 0.35 + level * 0.01);
+                // Spawn interval decreases (pipes closer together)
+                const interval = Math.max(1600, 2500 - level * 60);
+
+                return {
+                    gravity: gravity,
+                    flapStrength: -7 - level * 0.03,
+                    pipeSpeed: speed,
+                    pipeGap: gap,
+                    spawnInterval: interval
+                };
+            }
+
+            // Extreme difficulty: manual level control
+            function getExtremeDifficulty() {
+                const level = difficultyLevel; // 1-10 scale
+
+                // BIRD_SIZE is 35px, so minimum gap must be at least 3.5x = 125px
+                // Level 10 = Very hard but playable (gap 130, speed 3.6)
+                const gap = Math.max(130, 180 - level * 5); // 130px minimum, starts at 175
+                const speed = 2.2 + level * 0.14; // Max speed 3.6 at level 10
+                const gravity = 0.36 + level * 0.01; // Slight gravity increase
+                const interval = Math.max(1800, 2400 - level * 60); // More space between pipes
+
+                return {
+                    gravity: gravity,
+                    flapStrength: -7.0 - level * 0.02,
+                    pipeSpeed: speed,
+                    pipeGap: gap,
+                    spawnInterval: interval
+                };
+            }
+
+            // Game constants
+            const PIPE_WIDTH = 80;
+            const BIRD_SIZE = 35;
+            const GROUND_HEIGHT = 60;
+
+            // Game state
+            let bird = { x: 120, y: 350, velocity: 0, rotation: 0 };
+            let pipes = [];
+            let powerups = [];
+            let particles = [];
+            let score = 0;
+            let bestScore = parseInt(localStorage.getItem('flappyBestScore')) || 0;
+            let gameRunning = false;
+            let gamePaused = false;
+            let gameLoop = null;
+            let pipeSpawner = null;
+            let lastSpawnTime = 0; // For dynamic spawn timing
+            let lastFrameTime = 0; // For delta-time based movement
+            let frameCount = 0;
+            let gameStartTime = 0;
+            let isNightMode = false;
+            let isInvincible = false;
+            let isSlowMo = false;
+            let scoreMultiplier = 1;
+            let combo = 0;
+            let maxCombo = 0;
+            let perfectStreak = 0;
+            let sessionPerfects = 0;
+            let closeCalls = 0;
+            let gameEnded = false;
+            let godMode = false;
+            let newBestFlash = false;
+            let birdTrail = []; // For trail effect
+            let wasNewBest = false; // Track if this game had a new best
+
+            // Get combo bonus multiplier
+            function getComboMultiplier() {
+                if (combo >= 10) return 3.0;
+                if (combo >= 7) return 2.5;
+                if (combo >= 5) return 2.0;
+                if (combo >= 3) return 1.5;
+                return 1.0;
+            }
+
+            // Achievements system
+            const achievements = {
+                firstFlight: { name: "🐣 First Flight", desc: "Score 1 point", threshold: 1, unlocked: false },
+                gettingGood: { name: "⭐ Rising Star", desc: "Score 10 points", threshold: 10, unlocked: false },
+                proPlayer: { name: "🏆 Pro Player", desc: "Score 25 points", threshold: 25, unlocked: false },
+                legendary: { name: "👑 Legendary", desc: "Score 50 points", threshold: 50, unlocked: false },
+                perfectFive: { name: "💎 Perfect 5", desc: "5 perfect passes", threshold: 5, unlocked: false },
+                extremeSurvivor: { name: "🔥 Extreme Survivor", desc: "Score 10 on Extreme", threshold: 10, unlocked: false },
+                comboMaster: { name: "⚡ Combo Master", desc: "10x combo", threshold: 10, unlocked: false }
+            };
+
+            // Load achievements from localStorage
+            const savedAchievements = JSON.parse(localStorage.getItem('flappyAchievements')) || {};
+            Object.keys(savedAchievements).forEach(key => {
+                if (achievements[key]) achievements[key].unlocked = savedAchievements[key];
+            });
+
+            function checkAchievements() {
+                let newUnlock = null;
+
+                // Score-based achievements
+                if (score >= 1 && !achievements.firstFlight.unlocked) {
+                    achievements.firstFlight.unlocked = true;
+                    newUnlock = achievements.firstFlight;
+                }
+                if (score >= 10 && !achievements.gettingGood.unlocked) {
+                    achievements.gettingGood.unlocked = true;
+                    newUnlock = achievements.gettingGood;
+                }
+                if (score >= 25 && !achievements.proPlayer.unlocked) {
+                    achievements.proPlayer.unlocked = true;
+                    newUnlock = achievements.proPlayer;
+                }
+                if (score >= 50 && !achievements.legendary.unlocked) {
+                    achievements.legendary.unlocked = true;
+                    newUnlock = achievements.legendary;
+                }
+                if (perfectStreak >= 5 && !achievements.perfectFive.unlocked) {
+                    achievements.perfectFive.unlocked = true;
+                    newUnlock = achievements.perfectFive;
+                }
+                if (combo >= 10 && !achievements.comboMaster.unlocked) {
+                    achievements.comboMaster.unlocked = true;
+                    newUnlock = achievements.comboMaster;
+                }
+                if (currentDifficulty === 'extreme' && score >= 10 && !achievements.extremeSurvivor.unlocked) {
+                    achievements.extremeSurvivor.unlocked = true;
+                    newUnlock = achievements.extremeSurvivor;
+                }
+
+                if (newUnlock) {
+                    showAchievement(newUnlock);
+                    saveAchievements();
+                }
+            }
+
+            function showAchievement(achievement) {
+                const popup = document.createElement('div');
+                popup.style.cssText = `
+                position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+                background: linear-gradient(135deg, #FFD700, #FFA500);
+                color: #000; padding: 15px 30px; border-radius: 15px;
+                font-weight: bold; font-size: 16px; z-index: 1000;
+                box-shadow: 0 10px 40px rgba(255, 215, 0, 0.5);
+                animation: achievementPop 0.5s ease;
+            `;
+                popup.innerHTML = `🏅 Achievement Unlocked!<br><span style="font-size: 20px">${achievement.name}</span>`;
+                document.body.appendChild(popup);
+                setTimeout(() => popup.remove(), 3000);
+            }
+
+            function saveAchievements() {
+                const toSave = {};
+                Object.keys(achievements).forEach(key => {
+                    toSave[key] = achievements[key].unlocked;
+                });
+                localStorage.setItem('flappyAchievements', JSON.stringify(toSave));
+                updateAchievementsDisplay();
+            }
+
+            function updateAchievementsDisplay() {
+                const container = document.getElementById('achievementsList');
+                if (!container) return;
+
+                container.innerHTML = Object.keys(achievements).map(key => {
+                    const ach = achievements[key];
+                    const unlockedClass = ach.unlocked ? 'unlocked' : '';
+                    return `<div class="achievement-badge ${unlockedClass}" title="${ach.desc}">${ach.name}</div>`;
+                }).join('');
+            }
+
+            // Initialize achievements display on load
+            updateAchievementsDisplay();
+
+            // Stats
+            let stats = JSON.parse(localStorage.getItem('flappyStats')) || {
+                gamesPlayed: 0,
+                totalScore: 0,
+                bestStreak: 0,
+                pipesCleared: 0,
+                perfectPasses: 0
+            };
+            updateStatsDisplay();
+
+            // Reset functions
+            function resetStats() {
+                stats = {
+                    gamesPlayed: 0,
+                    totalScore: 0,
+                    bestStreak: 0,
+                    pipesCleared: 0,
+                    perfectPasses: 0
+                };
+                localStorage.setItem('flappyStats', JSON.stringify(stats));
+                updateStatsDisplay();
+                showToast('📊 Stats reset!');
+            }
+
+            function resetAchievements() {
+                Object.keys(achievements).forEach(key => {
+                    achievements[key].unlocked = false;
+                });
+                localStorage.removeItem('flappyAchievements');
+                updateAchievementsDisplay();
+                showToast('🔒 Achievements reset!');
+            }
+
+            function resetAll() {
+                resetStats();
+                resetAchievements();
+                bestScore = 0;
+                localStorage.removeItem('flappyBestScore');
+                document.getElementById('bestScore').textContent = 0;
+                showToast('💥 Everything reset!');
+            }
+
+            function showToast(message) {
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.9); color: white; padding: 12px 24px;
+                border-radius: 25px; font-size: 14px; z-index: 1001;
+                animation: slideUp 0.3s ease;
+            `;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 2000);
+            }
+
+            function showConfirmDialog(title, message, onConfirm) {
+                const overlay = document.createElement('div');
+                overlay.className = 'dialog-overlay';
+
+                const dialog = document.createElement('div');
+                dialog.className = 'confirm-dialog';
+                dialog.innerHTML = `
+                <h4>${title}</h4>
+                <p>${message}</p>
+                <div class="btn-group">
+                    <button class="btn-cancel">Cancel</button>
+                    <button class="btn-confirm">Confirm</button>
+                </div>
+            `;
+
+                document.body.appendChild(overlay);
+                document.body.appendChild(dialog);
+
+                dialog.querySelector('.btn-cancel').onclick = () => {
+                    overlay.remove();
+                    dialog.remove();
+                };
+
+                dialog.querySelector('.btn-confirm').onclick = () => {
+                    onConfirm();
+                    overlay.remove();
+                    dialog.remove();
+                };
+
+                overlay.onclick = () => {
+                    overlay.remove();
+                    dialog.remove();
+                };
+            }
+
+            // Reset button event listeners
+            document.getElementById('resetStats').addEventListener('click', () => {
+                showConfirmDialog('Reset Stats?', 'This will reset games played, total score, and streaks.', resetStats);
+            });
+
+            document.getElementById('resetAll').addEventListener('click', () => {
+                showConfirmDialog('⚠️ Reset Everything?', 'This will reset ALL data including your best score!', resetAll);
+            });
+
+            // Update displays
+            document.getElementById('bestScore').textContent = bestScore;
+
+            // Difficulty buttons
+            document.querySelectorAll('.diff-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentDifficulty = btn.dataset.diff;
+                    settings = difficulties[currentDifficulty];
+
+                    // Show slider for extreme mode
+                    const slider = document.getElementById('difficultySlider');
+                    if (currentDifficulty === 'extreme') {
+                        slider.style.display = 'block';
+                    } else {
+                        slider.style.display = 'none';
+                    }
+                });
+            });
+
+            // Difficulty level slider for extreme mode
+            document.getElementById('levelSlider').addEventListener('input', (e) => {
+                difficultyLevel = parseInt(e.target.value);
+                document.getElementById('levelValue').textContent = difficultyLevel;
+            });
+
+            // Theme toggle
+            document.getElementById('themeToggle').addEventListener('click', () => {
+                isNightMode = !isNightMode;
+                document.getElementById('themeToggle').textContent = isNightMode ? '☀️' : '🌙';
+            });
+
+            // Colors
+            function getColors() {
+                if (isNightMode) {
+                    return {
+                        skyTop: '#1a1a2e',
+                        skyBottom: '#16213e',
+                        ground: '#0f0f1a',
+                        grass: '#1a472a',
+                        pipe: '#2E7D32',
+                        pipeHighlight: '#4CAF50',
+                        pipeShadow: '#1B5E20',
+                        stars: true
+                    };
+                }
+                return {
+                    skyTop: '#87CEEB',
+                    skyBottom: '#98D8C8',
+                    ground: '#8B4513',
+                    grass: '#228B22',
+                    pipe: '#27AE60',
+                    pipeHighlight: '#2ECC71',
+                    pipeShadow: '#1E8449',
+                    stars: false
+                };
+            }
+
+            // Draw background
+            function drawBackground() {
+                const colors = getColors();
+
+                // Sky gradient
+                const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                gradient.addColorStop(0, colors.skyTop);
+                gradient.addColorStop(0.7, colors.skyBottom);
+                gradient.addColorStop(1, colors.grass);
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Stars (night mode)
+                if (colors.stars) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    for (let i = 0; i < 50; i++) {
+                        const x = (i * 97 + frameCount * 0.1) % canvas.width;
+                        const y = (i * 53) % (canvas.height - 150);
+                        const size = (i % 3) + 1;
+                        ctx.beginPath();
+                        ctx.arc(x, y, size, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+
+                // Clouds
+                ctx.fillStyle = isNightMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.9)';
+                drawCloud(100 - (frameCount * 0.3) % 900, 100, 50);
+                drawCloud(400 - (frameCount * 0.4) % 900, 150, 40);
+                drawCloud(700 - (frameCount * 0.2) % 900, 80, 45);
+
+                // Hills
+                ctx.fillStyle = isNightMode ? '#1a3a1a' : '#90EE90';
+                drawHill(0, canvas.height - GROUND_HEIGHT - 40, 200, 60);
+                drawHill(250, canvas.height - GROUND_HEIGHT - 30, 180, 50);
+                drawHill(500, canvas.height - GROUND_HEIGHT - 50, 220, 70);
+                drawHill(700, canvas.height - GROUND_HEIGHT - 35, 150, 55);
+
+                // Ground
+                ctx.fillStyle = colors.ground;
+                ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT);
+
+                // Grass
+                ctx.fillStyle = colors.grass;
+                ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, 15);
+
+                // Ground pattern
+                ctx.fillStyle = isNightMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.1)';
+                for (let i = 0; i < canvas.width; i += 30) {
+                    ctx.fillRect(i - (frameCount * 2) % 30, canvas.height - GROUND_HEIGHT + 15, 15, GROUND_HEIGHT - 15);
+                }
+            }
+
+            function drawCloud(x, y, size) {
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.arc(x + size * 0.8, y - size * 0.3, size * 0.7, 0, Math.PI * 2);
+                ctx.arc(x + size * 1.6, y, size * 0.8, 0, Math.PI * 2);
+                ctx.arc(x + size * 0.8, y + size * 0.2, size * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            function drawHill(x, y, width, height) {
+                ctx.beginPath();
+                ctx.moveTo(x, y + height);
+                ctx.quadraticCurveTo(x + width / 2, y - height * 0.5, x + width, y + height);
+                ctx.fill();
+            }
+
+            // Draw bird
+            function drawBird() {
+                ctx.save();
+                ctx.translate(bird.x, bird.y);
+
+                // Smooth rotation
+                const targetRotation = Math.min(Math.max(bird.velocity * 4, -25), 60);
+                bird.rotation += (targetRotation - bird.rotation) * 0.1;
+                ctx.rotate(bird.rotation * Math.PI / 180);
+
+                // Invincibility glow
+                if (isInvincible) {
+                    ctx.shadowColor = '#FFD700';
+                    ctx.shadowBlur = 30;
+                }
+
+                // Body
+                const bodyGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, BIRD_SIZE * 0.7);
+                bodyGradient.addColorStop(0, '#FFE135');
+                bodyGradient.addColorStop(1, '#FFD700');
+                ctx.fillStyle = bodyGradient;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, BIRD_SIZE * 0.7, BIRD_SIZE * 0.55, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Wing
+                ctx.fillStyle = '#FFA500';
+                const wingOffset = Math.sin(frameCount * 0.4) * 8;
+                ctx.beginPath();
+                ctx.ellipse(-5, wingOffset, BIRD_SIZE * 0.4, BIRD_SIZE * 0.25, -0.3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Eye white
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(BIRD_SIZE * 0.25, -6, 10, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Eye pupil
+                ctx.fillStyle = '#1a1a1a';
+                ctx.beginPath();
+                ctx.arc(BIRD_SIZE * 0.3, -6, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Eye shine
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(BIRD_SIZE * 0.35, -8, 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Beak
+                ctx.fillStyle = '#E74C3C';
+                ctx.beginPath();
+                ctx.moveTo(BIRD_SIZE * 0.5, 2);
+                ctx.lineTo(BIRD_SIZE * 0.95, 6);
+                ctx.lineTo(BIRD_SIZE * 0.5, 10);
+                ctx.closePath();
+                ctx.fill();
+
+                // Beak highlight
+                ctx.fillStyle = '#FF6B6B';
+                ctx.beginPath();
+                ctx.moveTo(BIRD_SIZE * 0.5, 2);
+                ctx.lineTo(BIRD_SIZE * 0.75, 4);
+                ctx.lineTo(BIRD_SIZE * 0.5, 6);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            // Draw pipes
+            function drawPipes() {
+                const colors = getColors();
+
+                pipes.forEach(pipe => {
+                    drawPipe(pipe.x, 0, PIPE_WIDTH, pipe.topHeight, true, colors);
+                    const bottomY = pipe.topHeight + settings.pipeGap;
+                    drawPipe(pipe.x, bottomY, PIPE_WIDTH, canvas.height - bottomY - GROUND_HEIGHT, false, colors);
+                });
+            }
+
+            function drawPipe(x, y, width, height, isTop, colors) {
+                if (height <= 0) return;
+
+                // Main body gradient
+                const gradient = ctx.createLinearGradient(x, 0, x + width, 0);
+                gradient.addColorStop(0, colors.pipeShadow);
+                gradient.addColorStop(0.2, colors.pipeHighlight);
+                gradient.addColorStop(0.5, colors.pipe);
+                gradient.addColorStop(0.8, colors.pipe);
+                gradient.addColorStop(1, colors.pipeShadow);
+
+                ctx.fillStyle = gradient;
+                ctx.fillRect(x, y, width, height);
+
+                // Pipe cap
+                const capHeight = 35;
+                const capWidth = width + 15;
+                const capX = x - 7.5;
+                const capY = isTop ? y + height - capHeight : y;
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.roundRect(capX, capY, capWidth, capHeight, 5);
+                ctx.fill();
+
+                // Cap border
+                ctx.strokeStyle = colors.pipeShadow;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.roundRect(capX, capY, capWidth, capHeight, 5);
+                ctx.stroke();
+
+                // Highlight line
+                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                ctx.fillRect(x + 10, y, 8, height);
+            }
+
+            // Draw power-ups
+            function drawPowerups() {
+                powerups.forEach(p => {
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(frameCount * 0.05);
+
+                    ctx.shadowColor = p.color;
+                    ctx.shadowBlur = 20;
+
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 20, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(p.icon, 0, 0);
+
+                    ctx.restore();
+                });
+            }
+
+            // Draw particles
+            function drawParticles() {
+                particles = particles.filter(p => p.life > 0);
+
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.1;
+                    p.life -= 2;
+
+                    ctx.globalAlpha = p.life / 100;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                });
+            }
+
+            // Create particles
+            function createParticles(x, y, color, count = 10) {
+                for (let i = 0; i < count; i++) {
+                    particles.push({
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 8,
+                        vy: (Math.random() - 0.5) * 8,
+                        size: Math.random() * 5 + 2,
+                        color: color,
+                        life: 100
+                    });
+                }
+            }
+
+            // Spawn pipe - ensure passable gap
+            function spawnPipe() {
+                // Minimum safe margins from top and bottom
+                const minTopHeight = 80;  // Minimum pipe from top
+                const minBottomSpace = 80; // Minimum pipe from bottom
+                const playableHeight = canvas.height - GROUND_HEIGHT;
+
+                // Calculate safe range for the gap center
+                const gapCenter = settings.pipeGap / 2;
+                const minGapTop = minTopHeight + gapCenter;
+                const maxGapTop = playableHeight - minBottomSpace - gapCenter;
+
+                // Make sure we have a valid range
+                if (maxGapTop <= minGapTop) {
+                    // Fallback: center the gap
+                    var topHeight = (playableHeight - settings.pipeGap) / 2;
+                } else {
+                    // Random position within safe range
+                    var topHeight = Math.random() * (maxGapTop - minGapTop) + minGapTop - gapCenter;
+                }
+
+                // Clamp to ensure valid values
+                topHeight = Math.max(minTopHeight, Math.min(topHeight, playableHeight - settings.pipeGap - minBottomSpace));
+
+                pipes.push({
+                    x: canvas.width,
+                    topHeight: topHeight,
+                    scored: false
+                });
+
+                // Random power-up spawn (25% chance)
+                if (Math.random() < 0.25) {
+                    const types = [
+                        { type: 'star', icon: '⭐', color: '#FFD700' },
+                        { type: 'slow', icon: '🌀', color: '#4ECDC4' },
+                        { type: 'diamond', icon: '💎', color: '#FF6B6B' }
+                    ];
+                    const powerup = types[Math.floor(Math.random() * types.length)];
+                    powerups.push({
+                        x: canvas.width + PIPE_WIDTH / 2,
+                        y: topHeight + settings.pipeGap / 2,
+                        ...powerup
+                    });
+                }
+            }
+
+            // Update game state
+            function update(deltaFactor = 1) {
+                if (gamePaused || gameEnded) return;
+
+                frameCount++;
+                const speedMultiplier = (isSlowMo ? 0.5 : 1) * deltaFactor;
+
+                // Update settings for progressive/extreme difficulty
+                if (currentDifficulty === 'progressive') {
+                    settings = getProgressiveDifficulty();
+                } else if (currentDifficulty === 'extreme') {
+                    settings = getExtremeDifficulty();
+                }
+
+                // GOD MODE: Auto-play AI
+                if (godMode && gameRunning) {
+                    autoPlayAI();
+                }
+
+                // Update bird
+                bird.velocity += settings.gravity * speedMultiplier;
+                bird.y += bird.velocity * speedMultiplier;
+
+                // Update pipes
+                pipes.forEach(pipe => {
+                    pipe.x -= settings.pipeSpeed * speedMultiplier;
+
+                    if (!pipe.scored && pipe.x + PIPE_WIDTH < bird.x) {
+                        // Check for perfect pass (bird is near center of gap)
+                        const gapCenter = pipe.topHeight + settings.pipeGap / 2;
+                        const distanceFromCenter = Math.abs(bird.y - gapCenter);
+                        const isPerfect = distanceFromCenter < settings.pipeGap * 0.15; // Within 15% of center
+
+                        // Check for close call (bird very close to pipe edges but survived)
+                        const topEdge = pipe.topHeight;
+                        const bottomEdge = pipe.topHeight + settings.pipeGap;
+                        const distToTop = Math.abs(bird.y - (BIRD_SIZE * 0.4) - topEdge);
+                        const distToBottom = Math.abs((bird.y + BIRD_SIZE * 0.4) - bottomEdge);
+                        const isCloseCall = !isPerfect && (distToTop < 15 || distToBottom < 15);
+
+                        // Calculate base points
+                        let points = 1 * scoreMultiplier;
+
+                        // Apply combo multiplier
+                        const comboMult = getComboMultiplier();
+                        points *= comboMult;
+
+                        if (isPerfect) {
+                            points *= 2; // Double points for perfect pass
+                            perfectStreak++;
+                            sessionPerfects++;
+                            stats.perfectPasses = (stats.perfectPasses || 0) + 1;
+                            createParticles(bird.x, bird.y, '#00FF88', 15); // Green particles
+                            const bonusText = comboMult > 1 ? `PERFECT! x${comboMult * 2}` : 'PERFECT! x2';
+                            showFloatingText(bird.x + 30, bird.y - 20, bonusText, '#00FF88');
+                        } else if (isCloseCall) {
+                            points += 0.5; // Bonus for close call
+                            closeCalls++;
+                            createParticles(bird.x, bird.y, '#FF6B6B', 10); // Red particles
+                            showCloseCall();
+                            perfectStreak = 0;
+                        } else {
+                            perfectStreak = 0;
+                            createParticles(bird.x, bird.y, '#FFD700', 5);
+                        }
+
+                        score += points;
+                        combo++;
+                        if (combo > maxCombo) maxCombo = combo;
+                        pipe.scored = true;
+                        stats.pipesCleared++;
+                        document.getElementById('currentScore').textContent = Math.floor(score);
+
+                        // Update HUD
+                        updateLiveHud();
+
+                        // Check for new best score
+                        if (score > bestScore) {
+                            bestScore = Math.floor(score);
+                            localStorage.setItem('flappyBestScore', bestScore);
+                            document.getElementById('bestScore').textContent = bestScore;
+                            if (!newBestFlash) {
+                                newBestFlash = true;
+                                wasNewBest = true;
+                                showFloatingText(400, 80, '🎉 NEW BEST!', '#FFD700');
+                                createScreenFlash();
+                            }
+                        }
+
+                        // Show combo indicator with multiplier
+                        if (combo >= 3) {
+                            showCombo(combo, comboMult);
+                        }
+
+                        // Check achievements
+                        checkAchievements();
+                    }
+                });
+
+                // Update power-ups
+                powerups.forEach((p, i) => {
+                    p.x -= settings.pipeSpeed * speedMultiplier;
+
+                    // Check collision with bird
+                    const dx = bird.x - p.x;
+                    const dy = bird.y - p.y;
+                    if (Math.sqrt(dx * dx + dy * dy) < 40) {
+                        activatePowerup(p.type);
+                        createParticles(p.x, p.y, p.color, 15);
+                        powerups.splice(i, 1);
+                    }
+                });
+
+                // Remove off-screen
+                pipes = pipes.filter(pipe => pipe.x + PIPE_WIDTH > 0);
+                powerups = powerups.filter(p => p.x > -30);
+
+                // Dynamic pipe spawning (uses current settings, not fixed interval)
+                const now = Date.now();
+                if (now - lastSpawnTime >= settings.spawnInterval) {
+                    spawnPipe();
+                    lastSpawnTime = now;
+                }
+
+                // Collision detection
+                if (!isInvincible && !gameEnded && checkCollision()) {
+                    gameOver();
+                }
+            }
+
+            // Activate power-up
+            function activatePowerup(type) {
+                if (type === 'star') {
+                    isInvincible = true;
+                    setTimeout(() => isInvincible = false, 3000);
+                } else if (type === 'slow') {
+                    isSlowMo = true;
+                    setTimeout(() => isSlowMo = false, 3000);
+                } else if (type === 'diamond') {
+                    scoreMultiplier = 5;
+                    setTimeout(() => scoreMultiplier = 1, 5000);
+                }
+            }
+
+            // Show combo with multiplier
+            function showCombo(count, multiplier = 1) {
+                const comboDisplay = document.getElementById('comboDisplay');
+                const multText = multiplier > 1 ? ` (${multiplier}x bonus!)` : '';
+                comboDisplay.textContent = `🔥 COMBO x${count}!${multText}`;
+                comboDisplay.classList.add('show');
+                setTimeout(() => comboDisplay.classList.remove('show'), 1200);
+            }
+
+            // Show close call indicator
+            function showCloseCall() {
+                const closeCallDisplay = document.getElementById('closeCallDisplay');
+                closeCallDisplay.classList.add('show');
+                setTimeout(() => closeCallDisplay.classList.remove('show'), 500);
+            }
+
+            // Create screen flash for new best score
+            function createScreenFlash() {
+                const flash = document.createElement('div');
+                flash.className = 'screen-flash';
+                document.querySelector('.game-container').appendChild(flash);
+                setTimeout(() => flash.remove(), 1000);
+            }
+
+            // Update live HUD
+            function updateLiveHud() {
+                const hudSpeed = document.getElementById('hudSpeed');
+                const hudGap = document.getElementById('hudGap');
+                const hudCombo = document.getElementById('hudCombo');
+                if (hudSpeed) hudSpeed.textContent = settings.pipeSpeed.toFixed(1);
+                if (hudGap) hudGap.textContent = Math.round(settings.pipeGap);
+                if (hudCombo) {
+                    const mult = getComboMultiplier();
+                    hudCombo.textContent = mult > 1 ? `${combo} (${mult}x)` : combo;
+                }
+            }
+
+            // Draw bird trail effect
+            function drawBirdTrail() {
+                // Add current position to trail
+                birdTrail.push({ x: bird.x - 15, y: bird.y, alpha: 0.6 });
+
+                // Keep only last 8 positions
+                if (birdTrail.length > 8) birdTrail.shift();
+
+                // Draw trail
+                birdTrail.forEach((pos, i) => {
+                    const alpha = (i / birdTrail.length) * pos.alpha;
+                    ctx.save();
+                    ctx.globalAlpha = alpha * 0.3;
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.arc(pos.x, pos.y, BIRD_SIZE * 0.3 * (i / birdTrail.length), 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                });
+            }
+
+            // Draw speed lines at high velocity
+            function drawSpeedLines() {
+                if (settings.pipeSpeed < 2.5) return; // Only show at high speeds
+
+                const intensity = Math.min((settings.pipeSpeed - 2.5) / 1.5, 1);
+                ctx.save();
+                ctx.strokeStyle = `rgba(255, 255, 255, ${intensity * 0.3})`;
+                ctx.lineWidth = 2;
+
+                for (let i = 0; i < 6; i++) {
+                    const y = (i * 120 + frameCount * 3) % canvas.height;
+                    const len = 30 + intensity * 50;
+                    ctx.beginPath();
+                    ctx.moveTo(canvas.width - 50, y);
+                    ctx.lineTo(canvas.width - 50 - len, y);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            // Show floating text for perfect passes, new best, etc.
+            let floatingTexts = [];
+            function showFloatingText(x, y, text, color) {
+                floatingTexts.push({
+                    x: x,
+                    y: y,
+                    text: text,
+                    color: color,
+                    alpha: 1,
+                    vy: -2 // Float upward
+                });
+            }
+
+            function updateFloatingTexts(ctx) {
+                floatingTexts = floatingTexts.filter(ft => {
+                    ft.y += ft.vy;
+                    ft.alpha -= 0.02;
+
+                    if (ft.alpha > 0) {
+                        ctx.save();
+                        ctx.globalAlpha = ft.alpha;
+                        ctx.font = 'bold 18px Poppins, sans-serif';
+                        ctx.fillStyle = ft.color;
+                        ctx.textAlign = 'center';
+                        ctx.fillText(ft.text, ft.x, ft.y);
+                        ctx.restore();
+                        return true;
+                    }
+                    return false;
+                });
+            }
+
+            // Check collision
+            function checkCollision() {
+                if (bird.y + BIRD_SIZE * 0.5 > canvas.height - GROUND_HEIGHT || bird.y - BIRD_SIZE * 0.5 < 0) {
+                    return true;
+                }
+
+                for (let pipe of pipes) {
+                    const birdLeft = bird.x - BIRD_SIZE * 0.5;
+                    const birdRight = bird.x + BIRD_SIZE * 0.5;
+                    const birdTop = bird.y - BIRD_SIZE * 0.4;
+                    const birdBottom = bird.y + BIRD_SIZE * 0.4;
+
+                    if (birdRight > pipe.x && birdLeft < pipe.x + PIPE_WIDTH) {
+                        if (birdTop < pipe.topHeight || birdBottom > pipe.topHeight + settings.pipeGap) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            // GOD MODE: High-Performance AI - Achieved 39 points on Hard
+            // Proven parameters: 30ms cooldown, 5px buffer, velocity > 0.3
+            let aiLastFlapTime = 0;
+
+            function autoPlayAI() {
+                const now = Date.now();
+
+                // 30ms cooldown: fast enough for Hard mode responsiveness
+                const cooldown = 30;
+                if (now - aiLastFlapTime < cooldown) return;
+
+                const groundY = canvas.height - GROUND_HEIGHT;
+                const g = settings.gravity;
+                const gap = settings.pipeGap;
+
+                // Find next pipe (with small buffer for bird width)
+                let targetPipe = null;
+                for (const pipe of pipes) {
+                    if (pipe.x + PIPE_WIDTH > bird.x - 20) {
+                        targetPipe = pipe;
+                        break;
+                    }
+                }
+
+                // Target: center of gap
+                const gapCenter = targetPipe
+                    ? targetPipe.topHeight + gap / 2
+                    : groundY * 0.4;
+
+                // Predict Y position after N frames
+                function predictY(frames) {
+                    let y = bird.y;
+                    let v = bird.velocity;
+                    for (let i = 0; i < frames; i++) {
+                        v += g;
+                        y += v;
+                    }
+                    return y;
+                }
+
+                // Flap helper
+                function doFlap() {
+                    aiLastFlapTime = now;
+                    flap();
+                }
+
+                // ===== SIMPLE BUT EFFECTIVE RULES =====
+
+                // RULE 1: CEILING PROTECTION (tighter for precision)
+                if (bird.y < 30 && bird.velocity < 0) {
+                    return;
+                }
+
+                // RULE 2: PIPE/GROUND EMERGENCY - Predict 4 frames ahead
+                const yIn4 = predictY(4);
+                if (targetPipe) {
+                    if (yIn4 > targetPipe.topHeight + gap - 25) {
+                        doFlap();
+                        return;
+                    }
+                } else if (yIn4 > groundY - 35) {
+                    doFlap();
+                    return;
+                }
+
+                // RULE 3: CORE LOGIC - Stay near gap center
+                // 5px buffer + velocity > 0.3 = optimal for Hard mode
+                const buffer = 5;
+
+                if (bird.y > gapCenter + buffer && bird.velocity > 0.3) {
+                    doFlap();
+                    return;
+                }
+            }
+
+            // Flap
+            function flap() {
+                if (gameRunning && !gamePaused) {
+                    bird.velocity = settings.flapStrength;
+                    createParticles(bird.x - 20, bird.y, 'rgba(255,255,255,0.5)', 3);
+                }
+            }
+
+            // Draw
+            function draw() {
+                drawBackground();
+                drawPipes();
+                drawPowerups();
+                drawBirdTrail(); // Bird trail effect
+                drawBird();
+                drawParticles();
+
+                // Slow-mo effect
+                if (isSlowMo) {
+                    ctx.fillStyle = 'rgba(78, 205, 196, 0.1)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+
+                // Invincibility effect
+                if (isInvincible) {
+                    ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(bird.x, bird.y, BIRD_SIZE + 10 + Math.sin(frameCount * 0.2) * 5, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                // Draw floating text (perfect passes, new best, etc.)
+                updateFloatingTexts(ctx);
+            }
+
+            // Game loop - delta‑time handling for smooth cross‑browser speed
+            function gameLoopFn(timestamp) {
+                if (!lastFrameTime) lastFrameTime = timestamp;
+                const deltaMs = timestamp - lastFrameTime;
+                lastFrameTime = timestamp;
+                // Cap delta to avoid huge jumps when tab becomes inactive
+                const cappedDelta = Math.min(deltaMs, 100);
+                // Normalise to a 60 fps baseline (16.67 ms per frame)
+                const dtFactor = cappedDelta / 16.67;
+                update(dtFactor);
+                draw();
+                gameLoop = requestAnimationFrame(gameLoopFn);
+            }
+
+            // Start game
+            function startGame() {
+                // Re-initialize settings based on current difficulty
+                settings = difficulties[currentDifficulty];
+
+                // For progressive/extreme, apply immediate difficulty settings
+                if (currentDifficulty === 'progressive') {
+                    settings = getProgressiveDifficulty();
+                } else if (currentDifficulty === 'extreme') {
+                    settings = getExtremeDifficulty();
+                }
+
+                bird = { x: 120, y: 350, velocity: 0, rotation: 0 };
+                pipes = [];
+                powerups = [];
+                particles = [];
+                score = 0;
+                combo = 0;
+                maxCombo = 0;
+                sessionPerfects = 0;
+                closeCalls = 0;
+                frameCount = 0;
+                isInvincible = false;
+                isSlowMo = false;
+                scoreMultiplier = 1;
+                gameStartTime = Date.now();
+                gameEnded = false;
+                perfectStreak = 0;
+                newBestFlash = false;
+                wasNewBest = false;
+                birdTrail = [];
+                floatingTexts = [];
+                document.getElementById('currentScore').textContent = 0;
+                document.getElementById('activePowerups').innerHTML = '';
+
+                // Always reset achievements on game start
+                Object.keys(achievements).forEach(key => {
+                    achievements[key].unlocked = false;
+                });
+                updateAchievementsDisplay();
+
+                // Show live HUD for progressive/extreme modes
+                const liveHud = document.getElementById('liveHud');
+                if (currentDifficulty === 'progressive' || currentDifficulty === 'extreme') {
+                    liveHud.classList.remove('hidden');
+                } else {
+                    liveHud.classList.add('hidden');
+                }
+
+                document.getElementById('startScreen').classList.add('hidden');
+                document.getElementById('gameOverScreen').classList.add('hidden');
+                document.getElementById('newBestBadge').classList.add('hidden');
+
+                gameRunning = true;
+                gamePaused = false;
+
+                // Initialize spawn timing (first pipe after 1.5s delay)
+                lastSpawnTime = Date.now() - settings.spawnInterval + 1500;
+
+                // Reset frame timing for consistent delta time
+                lastFrameTime = 0;
+
+                gameLoop = requestAnimationFrame(gameLoopFn);
+            }
+
+            // Game over
+            function gameOver() {
+                if (gameEnded) return; // Prevent multiple calls
+                gameEnded = true;
+                gameRunning = false;
+
+                cancelAnimationFrame(gameLoop);
+                gameLoop = null;
+
+                // Hide live HUD
+                document.getElementById('liveHud').classList.add('hidden');
+
+                const gameTime = Math.floor((Date.now() - gameStartTime) / 1000);
+                const finalScore = Math.floor(score);
+
+                // Update stats
+                stats.gamesPlayed++;
+                stats.totalScore += finalScore;
+                if (maxCombo > stats.bestStreak) stats.bestStreak = maxCombo;
+                localStorage.setItem('flappyStats', JSON.stringify(stats));
+                updateStatsDisplay();
+
+                if (finalScore > bestScore) {
+                    bestScore = finalScore;
+                    localStorage.setItem('flappyBestScore', bestScore);
+                    document.getElementById('bestScore').textContent = bestScore;
+                    wasNewBest = true;
+                }
+
+                // Update game over screen
+                document.getElementById('finalScore').textContent = finalScore;
+                document.getElementById('pipesPassed').textContent = pipes.filter(p => p.scored).length;
+                document.getElementById('gameTime').textContent = gameTime + 's';
+                document.getElementById('bestDisplay').textContent = bestScore;
+                document.getElementById('maxComboDisplay').textContent = maxCombo;
+                document.getElementById('perfectCount').textContent = sessionPerfects;
+                document.getElementById('closeCallCount').textContent = closeCalls;
+
+                // Show new best badge if applicable
+                if (wasNewBest) {
+                    document.getElementById('newBestBadge').classList.remove('hidden');
+                    document.getElementById('gameOverTitle').textContent = '🎉 New Record!';
+                } else {
+                    document.getElementById('newBestBadge').classList.add('hidden');
+                    document.getElementById('gameOverTitle').textContent = 'Game Over!';
+                }
+
+                document.getElementById('gameOverScreen').classList.remove('hidden');
+
+                createParticles(bird.x, bird.y, '#FF6B6B', 20);
+            }
+
+            // Update stats display
+            function updateStatsDisplay() {
+                document.getElementById('gamesPlayed').textContent = stats.gamesPlayed;
+                document.getElementById('totalScore').textContent = stats.totalScore;
+                document.getElementById('bestStreak').textContent = stats.bestStreak;
+                document.getElementById('pipesCleared').textContent = stats.pipesCleared;
+            }
+
+            // Initial draw
+            function initialDraw() {
+                drawBackground();
+                bird.y = 350;
+                drawBird();
+            }
+
+            // Event listeners
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    if (!gameRunning) {
+                        startGame();
+                    } else {
+                        flap();
+                    }
+                } else if (e.code === 'KeyP' && gameRunning) {
+                    gamePaused = !gamePaused;
+                    document.getElementById('pauseIndicator').classList.toggle('hidden', !gamePaused);
+                } else if (e.code === 'KeyR') {
+                    if (gameRunning) {
+                        cancelAnimationFrame(gameLoop);
+                        clearInterval(pipeSpawner);
+                    }
+                    startGame();
+                } else if (e.code === 'KeyG') {
+                    // Toggle God Mode
+                    godMode = !godMode;
+                    const indicator = document.getElementById('activePowerups');
+                    if (godMode) {
+                        indicator.innerHTML = '<div class="powerup-active" style="background: linear-gradient(135deg, #FFD700, #FFA500);">🤖 GOD MODE</div>';
+                        // Auto-start game if not running
+                        if (!gameRunning && !gameEnded) {
+                            startGame();
+                        }
+                    } else {
+                        indicator.innerHTML = '';
+                    }
+                }
+            });
+
+            canvas.addEventListener('click', () => {
+                if (!gameRunning) {
+                    startGame();
+                } else {
+                    flap();
+                }
+            });
+
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (!gameRunning) {
+                    startGame();
+                } else {
+                    flap();
+                }
+            });
+
+            initialDraw();
+        </script>
+</body>
+
+</html>
