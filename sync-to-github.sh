@@ -10,7 +10,8 @@ set -e
 # Configuration
 GITHUB_USERNAME="cp09x"
 REPO_NAME="antigravity-skills"
-GLOBAL_SKILLS_DIR="$HOME/.antigravity/skills"
+GLOBAL_SKILLS_DIR="$HOME/.gemini/skills"
+GLOBAL_GEMINI_FILE="$HOME/.gemini/GEMINI.md"
 
 # Auto-detect the repository directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -196,11 +197,10 @@ do_install_copy() {
     
     # Copy GEMINI.md (orchestrator config)
     if [[ "$target" == "global" ]]; then
-        # For global, copy to ~/.antigravity/
-        local global_root="$(dirname "$GLOBAL_SKILLS_DIR")"
+        # For global, copy to ~/.gemini/GEMINI.md
         if [ -f "$GEMINI_SOURCE" ]; then
-            cp "$GEMINI_SOURCE" "$global_root/"
-            print_success "GEMINI.md copied to: $global_root"
+            cp "$GEMINI_SOURCE" "$GLOBAL_GEMINI_FILE"
+            print_success "GEMINI.md copied to: $GLOBAL_GEMINI_FILE"
         fi
     else
         # For projects, copy to project root
@@ -223,7 +223,6 @@ do_install_link() {
     
     if [[ "$target" == "global" ]]; then
         target_path="$GLOBAL_SKILLS_DIR"
-        local global_root="$(dirname "$GLOBAL_SKILLS_DIR")"
         print_step "Linking skills globally to: $target_path"
         
         # For global, link the entire skills folder
@@ -233,18 +232,17 @@ do_install_link() {
             print_warning "Removing existing directory: $target_path"
             rm -rf "$target_path"
         fi
-        mkdir -p "$global_root"
+        mkdir -p "$(dirname "$GLOBAL_SKILLS_DIR")"
         ln -s "$link_source" "$target_path"
         print_success "Symlink created: $target_path -> $link_source"
         
         # Also link GEMINI.md for global
-        local gemini_link="$global_root/GEMINI.md"
         if [ -f "$GEMINI_SOURCE" ]; then
-            if [ -L "$gemini_link" ]; then
-                rm "$gemini_link"
+            if [ -L "$GLOBAL_GEMINI_FILE" ]; then
+                rm "$GLOBAL_GEMINI_FILE"
             fi
-            ln -s "$GEMINI_SOURCE" "$gemini_link"
-            print_success "Symlink created: $gemini_link -> $GEMINI_SOURCE"
+            ln -s "$GEMINI_SOURCE" "$GLOBAL_GEMINI_FILE"
+            print_success "Symlink created: $GLOBAL_GEMINI_FILE -> $GEMINI_SOURCE"
         fi
     else
         local project_root="$(resolve_path "$target")"
@@ -309,11 +307,9 @@ do_uninstall() {
     
     # Also remove GEMINI.md if it exists
     if [[ "$target" == "global" ]]; then
-        local global_root="$(dirname "$GLOBAL_SKILLS_DIR")"
-        local gemini_file="$global_root/GEMINI.md"
-        if [ -L "$gemini_file" ] || [ -f "$gemini_file" ]; then
-            rm "$gemini_file"
-            print_success "Removed: $gemini_file"
+        if [ -L "$GLOBAL_GEMINI_FILE" ] || [ -f "$GLOBAL_GEMINI_FILE" ]; then
+            rm "$GLOBAL_GEMINI_FILE"
+            print_success "Removed: $GLOBAL_GEMINI_FILE"
         fi
     else
         local gemini_link="$(resolve_path "$target")/GEMINI.md"
@@ -329,8 +325,7 @@ do_list() {
     echo -e "${CYAN}Antigravity Skills Installations${NC}"
     echo ""
     
-    # Check global
-    local global_root="$(dirname "$GLOBAL_SKILLS_DIR")"
+    # Check global skills
     if [ -L "$GLOBAL_SKILLS_DIR" ]; then
         local link_target=$(readlink "$GLOBAL_SKILLS_DIR")
         echo -e "${GREEN}●${NC} Global Skills (symlink): $GLOBAL_SKILLS_DIR -> $link_target"
@@ -342,10 +337,10 @@ do_list() {
     fi
     
     # Check global GEMINI.md
-    if [ -L "$global_root/GEMINI.md" ]; then
-        echo -e "${GREEN}●${NC} Global GEMINI.md (symlink): $global_root/GEMINI.md"
-    elif [ -f "$global_root/GEMINI.md" ]; then
-        echo -e "${GREEN}●${NC} Global GEMINI.md (copy): $global_root/GEMINI.md"
+    if [ -L "$GLOBAL_GEMINI_FILE" ]; then
+        echo -e "${GREEN}●${NC} Global GEMINI.md (symlink): $GLOBAL_GEMINI_FILE"
+    elif [ -f "$GLOBAL_GEMINI_FILE" ]; then
+        echo -e "${GREEN}●${NC} Global GEMINI.md (copy): $GLOBAL_GEMINI_FILE"
     else
         echo -e "${YELLOW}○${NC} Global GEMINI.md: Not installed"
     fi
