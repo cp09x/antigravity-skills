@@ -194,8 +194,16 @@ do_install_copy() {
         exit 1
     fi
     
-    # Copy GEMINI.md for projects (not global)
-    if [[ "$target" != "global" ]]; then
+    # Copy GEMINI.md (orchestrator config)
+    if [[ "$target" == "global" ]]; then
+        # For global, copy to ~/.antigravity/
+        local global_root="$(dirname "$GLOBAL_SKILLS_DIR")"
+        if [ -f "$GEMINI_SOURCE" ]; then
+            cp "$GEMINI_SOURCE" "$global_root/"
+            print_success "GEMINI.md copied to: $global_root"
+        fi
+    else
+        # For projects, copy to project root
         local project_root="$(resolve_path "$target")"
         if [ -f "$GEMINI_SOURCE" ]; then
             cp "$GEMINI_SOURCE" "$project_root/"
@@ -215,6 +223,7 @@ do_install_link() {
     
     if [[ "$target" == "global" ]]; then
         target_path="$GLOBAL_SKILLS_DIR"
+        local global_root="$(dirname "$GLOBAL_SKILLS_DIR")"
         print_step "Linking skills globally to: $target_path"
         
         # For global, link the entire skills folder
@@ -224,9 +233,19 @@ do_install_link() {
             print_warning "Removing existing directory: $target_path"
             rm -rf "$target_path"
         fi
-        mkdir -p "$(dirname "$target_path")"
+        mkdir -p "$global_root"
         ln -s "$link_source" "$target_path"
         print_success "Symlink created: $target_path -> $link_source"
+        
+        # Also link GEMINI.md for global
+        local gemini_link="$global_root/GEMINI.md"
+        if [ -f "$GEMINI_SOURCE" ]; then
+            if [ -L "$gemini_link" ]; then
+                rm "$gemini_link"
+            fi
+            ln -s "$GEMINI_SOURCE" "$gemini_link"
+            print_success "Symlink created: $gemini_link -> $GEMINI_SOURCE"
+        fi
     else
         local project_root="$(resolve_path "$target")"
         target_path="$project_root/.agent/skills"
@@ -288,8 +307,15 @@ do_uninstall() {
         print_warning "Nothing to uninstall at: $target_path"
     fi
     
-    # Also remove GEMINI.md if it's a symlink
-    if [[ "$target" != "global" ]]; then
+    # Also remove GEMINI.md if it exists
+    if [[ "$target" == "global" ]]; then
+        local global_root="$(dirname "$GLOBAL_SKILLS_DIR")"
+        local gemini_file="$global_root/GEMINI.md"
+        if [ -L "$gemini_file" ] || [ -f "$gemini_file" ]; then
+            rm "$gemini_file"
+            print_success "Removed: $gemini_file"
+        fi
+    else
         local gemini_link="$(resolve_path "$target")/GEMINI.md"
         if [ -L "$gemini_link" ]; then
             rm "$gemini_link"
@@ -304,14 +330,24 @@ do_list() {
     echo ""
     
     # Check global
+    local global_root="$(dirname "$GLOBAL_SKILLS_DIR")"
     if [ -L "$GLOBAL_SKILLS_DIR" ]; then
         local link_target=$(readlink "$GLOBAL_SKILLS_DIR")
-        echo -e "${GREEN}●${NC} Global (symlink): $GLOBAL_SKILLS_DIR -> $link_target"
+        echo -e "${GREEN}●${NC} Global Skills (symlink): $GLOBAL_SKILLS_DIR -> $link_target"
     elif [ -d "$GLOBAL_SKILLS_DIR" ]; then
         local skill_count=$(ls -1 "$GLOBAL_SKILLS_DIR" 2>/dev/null | wc -l | tr -d ' ')
-        echo -e "${GREEN}●${NC} Global (copy): $GLOBAL_SKILLS_DIR ($skill_count skills)"
+        echo -e "${GREEN}●${NC} Global Skills (copy): $GLOBAL_SKILLS_DIR ($skill_count skills)"
     else
-        echo -e "${YELLOW}○${NC} Global: Not installed"
+        echo -e "${YELLOW}○${NC} Global Skills: Not installed"
+    fi
+    
+    # Check global GEMINI.md
+    if [ -L "$global_root/GEMINI.md" ]; then
+        echo -e "${GREEN}●${NC} Global GEMINI.md (symlink): $global_root/GEMINI.md"
+    elif [ -f "$global_root/GEMINI.md" ]; then
+        echo -e "${GREEN}●${NC} Global GEMINI.md (copy): $global_root/GEMINI.md"
+    else
+        echo -e "${YELLOW}○${NC} Global GEMINI.md: Not installed"
     fi
     
     # Check current project
