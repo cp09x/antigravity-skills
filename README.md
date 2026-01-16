@@ -21,69 +21,63 @@ A collection of specialized skills for the **Antigravity AI coding assistant**, 
 | **oracle** | Architecture review & strategic decisions |
 | **security-researcher** | Reverse engineering, pentesting, exploits |
 
-### Other Files
-
-- **`GEMINI.md`** - Sisyphus orchestrator configuration
-- **`flappy-bird.html`** - Demo game with advanced features
-- **`sync-to-github.sh`** - Multi-machine sync script
-
 ---
 
-## 🔧 Setup on a New Machine
+## 🔧 Quick Start
 
-### 1. Clone the Repository
+### Clone the Repository
 
 ```bash
 git clone https://YOUR_USERNAME@github.com/YOUR_USERNAME/antigravity-skills.git
 cd antigravity-skills
 ```
 
-When prompted for password, enter your **Personal Access Token** (not your GitHub password).
-
-### 2. Generate a Personal Access Token (if needed)
-
-1. Go to [GitHub Settings → Tokens](https://github.com/settings/tokens)
-2. Click **"Generate new token (classic)"**
-3. Name: `antigravity-skills`
-4. Scope: ✅ `repo`
-5. Generate and **copy immediately**
-
-### 3. Configure macOS Keychain (optional)
+### Install Skills Globally
 
 ```bash
-./setup-github-https.sh
+./sync-to-github.sh install global
 ```
 
-This saves your token securely so you don't re-enter it.
+This copies skills to `~/.antigravity/skills/` - available for all projects.
+
+### Install to a Specific Project
+
+```bash
+# Copy skills (independent copy)
+./sync-to-github.sh install ~/projects/my-app
+
+# Or symlink (auto-updates when source changes)
+./sync-to-github.sh link ~/projects/my-app
+```
 
 ---
 
-## 🔄 Sync Commands
+## 📋 All Commands
+
+### Git Commands
 
 | Command | Description |
 |---------|-------------|
-| `./sync-to-github.sh push "message"` | Upload changes to GitHub |
-| `./sync-to-github.sh pull` | Download latest from GitHub |
-| `./sync-to-github.sh sync` | Pull then push (full sync) |
+| `./sync-to-github.sh push "msg"` | Push changes to GitHub |
+| `./sync-to-github.sh pull` | Pull latest from GitHub |
+| `./sync-to-github.sh sync` | Pull then push |
 | `./sync-to-github.sh status` | Show git status |
-| `./sync-to-github.sh clone` | Show clone command |
 
-### Examples
+### Install Commands
 
-```bash
-# Push your changes
-./sync-to-github.sh push "Added new skill"
-
-# Get latest from another machine
-./sync-to-github.sh pull
-
-# Full sync (pull + push)
-./sync-to-github.sh sync "Merged updates"
-```
+| Command | Description |
+|---------|-------------|
+| `./sync-to-github.sh install global` | Copy skills to ~/.antigravity/skills |
+| `./sync-to-github.sh install <path>` | Copy skills to a project |
+| `./sync-to-github.sh link global` | Symlink global (auto-updates) |
+| `./sync-to-github.sh link <path>` | Symlink to project (auto-updates) |
+| `./sync-to-github.sh uninstall global` | Remove global installation |
+| `./sync-to-github.sh uninstall <path>` | Remove from project |
+| `./sync-to-github.sh list` | Show installed locations |
 
 ---
 
-## 🎯 Multi-Machine Workflow
+## 🔄 Multi-Machine Workflow
 
 ```
 ┌─────────────────┐         ┌─────────────────┐
@@ -93,9 +87,8 @@ This saves your token securely so you don't re-enter it.
 │       ↓         │         │                 │
 │  ./sync push    │ ──────► │  ./sync pull    │
 │                 │  GitHub │       ↓         │
-│                 │         │  Make changes   │
-│                 │         │       ↓         │
-│  ./sync pull    │ ◄────── │  ./sync push    │
+│                 │         │  install global │
+│                 │         │                 │
 └─────────────────┘         └─────────────────┘
 ```
 
@@ -105,47 +98,56 @@ This saves your token securely so you don't re-enter it.
 
 ```
 antigravity-skills/
-├── .agent/
-│   └── skills/
-│       ├── algorithm-engineer/SKILL.md
-│       ├── background-tasks/SKILL.md
-│       ├── cloud-architect/SKILL.md
-│       ├── debugger/SKILL.md
-│       ├── document-writer/SKILL.md
-│       ├── explore/SKILL.md
-│       ├── frontend-ui-ux/SKILL.md
-│       ├── git-master/SKILL.md
-│       ├── librarian/SKILL.md
-│       ├── mobile-developer/SKILL.md
-│       ├── oracle/SKILL.md
-│       └── security-researcher/SKILL.md
-├── GEMINI.md              # Sisyphus orchestrator config
-├── flappy-bird.html       # Demo game
-├── setup-github-https.sh  # Credential setup script
-├── sync-to-github.sh      # Sync script
-└── README.md              # This file
+├── .agent/skills/           # Source skills
+│   ├── algorithm-engineer/
+│   ├── cloud-architect/
+│   ├── debugger/
+│   └── ... (12 skills)
+├── GEMINI.md                # Sisyphus orchestrator config
+├── sync-to-github.sh        # Main management script
+├── setup-github-https.sh    # Credential setup
+└── README.md
 ```
 
 ---
 
-## 🧠 Using the Skills
+## 🧠 Using Skills
 
-Skills are automatically detected by Antigravity based on task type. You can also reference them explicitly:
+Skills are automatically detected by Antigravity. You can also reference them explicitly:
 
 ```
 "Use the debugger skill to fix this bug"
-"Apply frontend-ui-ux patterns to improve this UI"
+"Apply frontend-ui-ux patterns here"
 ```
 
 ### Magic Words
 
 | Trigger | Effect |
 |---------|--------|
-| `ultrawork` / `ulw` | Maximum parallelization |
-| `deep` | Use Deep Think model |
-| `quick` | Use Flash model for speed |
-| `iterate` | Extended debugging loops |
-| `research` | Prioritize external research |
+| `ultrawork` | Maximum parallelization |
+| `deep` | Deep Think model |
+| `quick` | Flash model for speed |
+| `iterate` | Extended debugging |
+| `research` | Prioritize research |
+
+---
+
+## 🔐 HTTPS Authentication
+
+This repo uses HTTPS with Personal Access Token (not SSH).
+
+### Generate a Token
+
+1. Go to [GitHub Settings → Tokens](https://github.com/settings/tokens)
+2. Generate new token (classic)
+3. Scope: ✅ `repo`
+4. Copy and save securely
+
+### Setup macOS Keychain
+
+```bash
+./setup-github-https.sh
+```
 
 ---
 
