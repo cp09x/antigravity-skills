@@ -46,19 +46,23 @@ show_help() {
     echo "  status             Show git status"
     echo ""
     echo -e "${YELLOW}Install Commands:${NC}"
-    echo "  install global     Copy skills to ~/.antigravity/skills (available everywhere)"
+    echo "  install global     Copy skills to ~/.gemini/skills"
     echo "  install <path>     Copy skills to a specific project"
     echo "  link global        Symlink global skills (auto-updates)"
-    echo "  link <path>        Symlink skills to a project (auto-updates)"
-    echo "  uninstall global   Remove global skills installation"
+    echo "  link <path>        Symlink skills to a project"
+    echo "  uninstall global   Remove global skills"
     echo "  uninstall <path>   Remove skills from a project"
-    echo "  list               Show where skills are installed"
+    echo "  update             Pull latest + reinstall global (one step)"
+    echo ""
+    echo -e "${YELLOW}Info Commands:${NC}"
+    echo "  list               Show installed locations and versions"
+    echo "  info <skill>       Show skill description"
+    echo "  info               List all skills with descriptions"
     echo ""
     echo -e "${YELLOW}Examples:${NC}"
-    echo "  ./sync-to-github.sh push \"Added new skill\""
-    echo "  ./sync-to-github.sh install global"
-    echo "  ./sync-to-github.sh install ~/projects/my-app"
-    echo "  ./sync-to-github.sh link ~/projects/my-app"
+    echo "  ./sync-to-github.sh update              # Sync and reinstall"
+    echo "  ./sync-to-github.sh info debugger       # Show debugger skill info"
+    echo "  ./sync-to-github.sh install global      # Install all skills globally"
     echo ""
 }
 
@@ -325,6 +329,10 @@ do_list() {
     echo -e "${CYAN}Antigravity Skills Installations${NC}"
     echo ""
     
+    # Show version info
+    echo -e "${YELLOW}Source Version:${NC} $(get_version_info)"
+    echo ""
+    
     # Check global skills
     if [ -L "$GLOBAL_SKILLS_DIR" ]; then
         local link_target=$(readlink "$GLOBAL_SKILLS_DIR")
@@ -377,6 +385,164 @@ do_clone_info() {
     echo ""
 }
 
+# Get current git commit info
+get_version_info() {
+    if [ -d "$REPO_DIR/.git" ]; then
+        local commit=$(git -C "$REPO_DIR" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+        local date=$(git -C "$REPO_DIR" log -1 --format=%cd --date=short 2>/dev/null || echo "unknown")
+        echo "$commit ($date)"
+    else
+        echo "not a git repo"
+    fi
+}
+
+# Update command: pull + install global
+do_update() {
+    print_step "Updating Antigravity Skills..."
+    echo ""
+    
+    # Pull latest
+    do_pull
+    echo ""
+    
+    # Reinstall globally
+    do_install_copy "global"
+    
+    echo ""
+    print_success "Update complete!"
+    print_info "Version: $(get_version_info)"
+}
+
+# Info command: show skill descriptions
+do_info() {
+    local skill_name="$1"
+    
+    if [ -z "$skill_name" ]; then
+        # List all skills with descriptions
+        echo ""
+        echo -e "${CYAN}Available Skills${NC}"
+        echo ""
+        
+        for skill_dir in "$SKILLS_SOURCE"/*/; do
+            if [ -d "$skill_dir" ]; then
+                local name=$(basename "$skill_dir")
+                local skill_file="$skill_dir/SKILL.md"
+                
+                if [ -f "$skill_file" ]; then
+                    # Extract description from YAML frontmatter
+                    local desc=$(sed -n '/^---$/,/^---$/p' "$skill_file" | grep "^description:" | sed 's/^description: *//')
+                    if [ -z "$desc" ]; then
+                        desc="No description"
+                    fi
+                    printf "  ${GREEN}%-20s${NC} %s\n" "$name" "$desc"
+                else
+                    printf "  ${YELLOW}%-20s${NC} (no SKILL.md)\n" "$name"
+                fi
+            fi
+        done
+        echo ""
+    else
+        # Show specific skill info
+        local skill_dir="$SKILLS_SOURCE/$skill_name"
+        local skill_file="$skill_dir/SKILL.md"
+        
+        if [ ! -d "$skill_dir" ]; then
+            print_error "Skill not found: $skill_name"
+            echo ""
+            echo "Available skills:"
+            ls -1 "$SKILLS_SOURCE" 2>/dev/null | sed 's/^/  /'
+            exit 1
+        fi
+        
+        echo ""
+        echo -e "${CYAN}$skill_name${NC}"
+        echo "$(printf '%.0s─' {1..40})"
+        
+        if [ -f "$skill_file" ]; then
+            # Extract frontmatter info
+            local desc=$(sed -n '/^---$/,/^---$/p' "$skill_file" | grep "^description:" | sed 's/^description: *//')
+            
+            echo -e "${YELLOW}Description:${NC} ${desc:-No description}"
+            echo -e "${YELLOW}Location:${NC}    $skill_file"
+            
+            # Count lines (rough size indicator)
+            local lines=$(wc -l < "$skill_file" | tr -d ' ')
+            echo -e "${YELLOW}Size:${NC}        $lines lines"
+            
+            echo ""
+            echo -e "${YELLOW}Preview:${NC}"
+            # Show first 10 non-frontmatter lines
+            sed -n '/^---$/,/^---$/!p' "$skill_file" | head -10 | sed 's/^/  /'
+            echo "  ..."
+        else
+            print_warning "No SKILL.md found in $skill_dir"
+        fi
+        echo ""
+    fi
+}
+
+# ============================================================================
+# Interactive Menu
+# ============================================================================
+
+do_menu() {
+    echo ""
+    echo -e "${CYAN}╔════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║     Antigravity Skills Manager         ║${NC}"
+    echo -e "${CYAN}╚════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${YELLOW}Git Commands:${NC}"
+    echo "  1) push        Push local changes to GitHub"
+    echo "  2) pull        Pull latest changes from GitHub"
+    echo "  3) sync        Pull then push (full sync)"
+    echo "  4) status      Show git status"
+    echo ""
+    echo -e "${YELLOW}Install Commands:${NC}"
+    echo "  5) install     Install skills globally"
+    echo "  6) link        Symlink skills globally (auto-updates)"
+    echo "  7) uninstall   Remove global skills"
+    echo "  8) update      Pull latest + reinstall global"
+    echo ""
+    echo -e "${YELLOW}Info Commands:${NC}"
+    echo "  9) list        Show installed locations"
+    echo " 10) info        List all skills with descriptions"
+    echo " 11) help        Show full help"
+    echo ""
+    echo "  0) exit"
+    echo ""
+    
+    read -p "Select option [0-11]: " choice
+    echo ""
+    
+    case "$choice" in
+        1)
+            read -p "Commit message (or press Enter for default): " msg
+            do_push "${msg:-}"
+            ;;
+        2) do_pull ;;
+        3)
+            read -p "Commit message (or press Enter for default): " msg
+            do_pull
+            do_push "${msg:-}"
+            ;;
+        4) do_status ;;
+        5) do_install_copy "global" ;;
+        6) do_install_link "global" ;;
+        7) do_uninstall "global" ;;
+        8) do_update ;;
+        9) do_list ;;
+        10) do_info ;;
+        11) show_help ;;
+        0|q|Q|exit) 
+            echo "Goodbye!"
+            exit 0
+            ;;
+        *)
+            print_error "Invalid option: $choice"
+            ;;
+    esac
+}
+
 # ============================================================================
 # Main
 # ============================================================================
@@ -416,8 +582,14 @@ case "${1:-}" in
         fi
         do_uninstall "$2"
         ;;
+    update)
+        do_update
+        ;;
     list)
         do_list
+        ;;
+    info)
+        do_info "$2"
         ;;
     clone)
         do_clone_info
@@ -425,8 +597,11 @@ case "${1:-}" in
     help|--help|-h)
         show_help
         ;;
+    menu)
+        do_menu
+        ;;
     "")
-        show_help
+        do_menu
         ;;
     *)
         # If first arg looks like a message, treat as push
